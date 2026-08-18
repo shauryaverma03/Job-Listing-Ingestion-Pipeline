@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Play, Terminal, ShieldCheck, Gauge, Cpu, Database, Activity, RefreshCw } from 'lucide-react';
+import { Sparkles, Play, Terminal, ShieldCheck, Gauge, Cpu, Database, Activity, RefreshCw, ArrowRight } from 'lucide-react';
 import { ThemeSelector } from './ThemeSelector';
 
 export function HeroFrontPage({ onStartTour, onOpenTerminal, onTriggerFetch, isTriggering, currentTheme, onSelectTheme, lastUpdated }) {
@@ -13,13 +13,13 @@ export function HeroFrontPage({ onStartTour, onOpenTerminal, onTriggerFetch, isT
         position: 'relative',
         overflow: 'hidden',
         border: '1px solid rgba(255, 255, 255, 0.1)',
-        background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(10, 15, 30, 0.9) 100%)'
+        background: '#0f172a'
       }}
     >
-      {/* Top Header Row with System Status Badge & Theme Switcher */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+      {/* Top Header Bar with Live Badge & Theme Selector */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '0.85rem' }}>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -34,12 +34,12 @@ export function HeroFrontPage({ onStartTour, onOpenTerminal, onTriggerFetch, isT
             fontFamily: 'var(--font-mono)'
           }}>
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }} />
-            PIPELINE STATUS: HEALTHY
+            INGESTION ENGINE ONLINE
           </div>
 
           {lastUpdated && (
             <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-              <RefreshCw size={12} className="spin" /> Updated {new Date(lastUpdated).toLocaleTimeString()}
+              <RefreshCw size={12} className="spin" /> Sync {new Date(lastUpdated).toLocaleTimeString()}
             </span>
           )}
         </div>
@@ -48,23 +48,23 @@ export function HeroFrontPage({ onStartTour, onOpenTerminal, onTriggerFetch, isT
         <ThemeSelector currentTheme={currentTheme} onSelectTheme={onSelectTheme} />
       </div>
 
-      <div className="hero-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '2rem', alignItems: 'center' }}>
+      <div className="hero-grid" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '2rem', alignItems: 'center' }}>
         
-        {/* Left Column: Hero Title & Controls */}
+        {/* Left Column: Clear Title & Controls */}
         <div>
-          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-indigo)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.5rem', fontFamily: 'var(--font-mono)' }}>
-            ACDYON Technologies Engineering Challenge • Part 1
+          <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-cyan)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.4rem', fontFamily: 'var(--font-mono)' }}>
+            Job Feed Scraper & Resilience Pipeline
           </div>
 
-          <h1 className="hero-title" style={{ fontSize: '2.2rem', fontWeight: 800, lineHeight: '1.25', marginBottom: '0.85rem', color: '#ffffff', letterSpacing: '-0.02em' }}>
-            Resilient Job Listing Ingestion Pipeline
+          <h1 className="hero-title" style={{ fontSize: '2.1rem', fontWeight: 800, lineHeight: '1.25', marginBottom: '0.75rem', color: '#ffffff', letterSpacing: '-0.02em' }}>
+            Fault-Tolerant Job Listing Ingestion System
           </h1>
 
-          <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', lineHeight: '1.65', marginBottom: '1.5rem', maxWidth: '640px' }}>
-            Fault-tolerant web crawler & ingestion engine built with a <strong style={{ color: '#ffffff' }}>Token-Bucket Rate Limiter</strong>, <strong style={{ color: '#ffffff' }}>3-State Circuit Breaker</strong>, <strong style={{ color: '#ffffff' }}>Exponential Retry Backoff with Jitter</strong>, and <strong style={{ color: '#ffffff' }}>SQLite Deduplication</strong>.
+          <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '1.5rem', maxWidth: '620px' }}>
+            Monitors low-risk public feeds with rate limiting, circuit breaker failovers, retry exponential backoff, and SQLite deduplication.
           </p>
 
-          {/* Primary Action Controls */}
+          {/* Action Toolbar */}
           <div style={{ display: 'flex', gap: '0.85rem', flexWrap: 'wrap', alignItems: 'center' }}>
             
             <button
@@ -137,39 +137,40 @@ export function HeroFrontPage({ onStartTour, onOpenTerminal, onTriggerFetch, isT
           </div>
         </div>
 
-        {/* Right Column: Key Architecture Highlights */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+        {/* Right Column: Live Pipeline Architecture Pipeline Flow Visualizer */}
+        <div style={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px', padding: '1.25rem' }}>
           
-          <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '0.9rem 1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.35rem' }}>
-              <Gauge size={18} color="var(--accent-cyan)" />
-              <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>Token Bucket</h4>
-            </div>
-            <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>Capped at 10 req/min per source with automatic token refills.</p>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem', fontFamily: 'var(--font-mono)' }}>
+            LIVE ARCHITECTURE INGESTION FLOW
           </div>
 
-          <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '0.9rem 1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.35rem' }}>
-              <ShieldCheck size={18} color="var(--accent-rose)" />
-              <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>Circuit Breaker</h4>
+          <div style={{ display: 'grid', gap: '0.65rem' }}>
+            
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(30, 41, 59, 0.6)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ fontSize: '0.8rem', color: '#ffffff', fontWeight: 600 }}>1. Primary Source</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)' }}>RemoteOK API</span>
             </div>
-            <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>Trips open on 5 errors with 30s cooldown & half-open trial.</p>
-          </div>
 
-          <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '0.9rem 1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.35rem' }}>
-              <Cpu size={18} color="var(--accent-emerald)" />
-              <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>Stateless Workers</h4>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(30, 41, 59, 0.6)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ fontSize: '0.8rem', color: '#ffffff', fontWeight: 600 }}>2. Traffic Control</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--accent-indigo)', fontFamily: 'var(--font-mono)' }}>Token Bucket (10 req/m)</span>
             </div>
-            <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>Concurrent worker pool designed for horizontal scaling.</p>
-          </div>
 
-          <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '0.9rem 1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.35rem' }}>
-              <Database size={18} color="var(--accent-purple)" />
-              <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>Plan B Fallback</h4>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(30, 41, 59, 0.6)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ fontSize: '0.8rem', color: '#ffffff', fontWeight: 600 }}>3. Resilience Guard</span>
+              <span style={{ fontSize: '0.75rem', color: '#34d399', fontFamily: 'var(--font-mono)' }}>Circuit Breaker (5 err limit)</span>
             </div>
-            <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>Secondary RSS feed failover + stale SQLite DB cache fallback.</p>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(30, 41, 59, 0.6)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ fontSize: '0.8rem', color: '#ffffff', fontWeight: 600 }}>4. Secondary Failover</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--accent-purple)', fontFamily: 'var(--font-mono)' }}>WeWorkRemotely RSS</span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(30, 41, 59, 0.6)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ fontSize: '0.8rem', color: '#ffffff', fontWeight: 600 }}>5. Persistence & Cache</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--accent-amber)', fontFamily: 'var(--font-mono)' }}>SQLite WAL (ON CONFLICT)</span>
+            </div>
+
           </div>
 
         </div>

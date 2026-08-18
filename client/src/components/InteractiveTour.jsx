@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, ArrowRight, ArrowLeft, X, CheckCircle, ShieldAlert, Gauge, Cpu, Terminal, Database, Play } from 'lucide-react';
 
 const TOUR_STEPS = [
@@ -6,9 +6,9 @@ const TOUR_STEPS = [
     targetId: 'hero-header-section',
     icon: Sparkles,
     color: '#8b5cf6',
-    title: 'Welcome to Job Ingestion Pipeline',
-    subtitle: 'Resilient Scraping Architecture',
-    description: 'This pipeline ingests listings on a schedule or on-demand without auth walls. Let us tour each resilience feature in action!',
+    title: 'Welcome to Job Pulse Ingestion Engine',
+    subtitle: 'Resilient Scraper Architecture Overview',
+    description: 'This pipeline automatically ingests job listings on a schedule or on-demand without authentication walls. Let us explore each resilience component in action!',
     badge: 'Step 1 of 7'
   },
   {
@@ -16,8 +16,8 @@ const TOUR_STEPS = [
     icon: Gauge,
     color: '#06b6d4',
     title: 'Token-Bucket Rate Limiter',
-    subtitle: 'Traffic Control (10 req/min)',
-    description: 'Prevents target public endpoints from blocking our scraper IP. Uses a token bucket that continuously refills over time to handle smooth bursts.',
+    subtitle: 'Pacing & Traffic Control (10 req/min)',
+    description: 'Prevents target public endpoints from throttling or blocking our scraper IP. Uses a token bucket that continuously refills over time to handle smooth burst traffic.',
     badge: 'Step 2 of 7'
   },
   {
@@ -25,17 +25,17 @@ const TOUR_STEPS = [
     icon: ShieldAlert,
     color: '#ef4444',
     title: '3-State Circuit Breaker',
-    subtitle: 'Closed ➔ Open ➔ Half-Open State Machine',
-    description: 'Trips to OPEN after 5 consecutive errors to prevent cascading failures. After a 30s cooldown, transitions to HALF-OPEN to test recovery.',
+    subtitle: 'CLOSED ➔ OPEN ➔ HALF-OPEN State Machine',
+    description: 'Trips to OPEN after 5 consecutive errors to prevent cascading failures. After a 30-second cooldown, it transitions to HALF-OPEN to test system recovery.',
     badge: 'Step 3 of 7'
   },
   {
     targetId: 'worker-pool-card',
     icon: Cpu,
     color: '#3b82f6',
-    title: 'Stateless Worker Pool',
+    title: 'Stateless Worker Engine Pool',
     subtitle: 'Asynchronous Background Queue',
-    description: 'Background cron (every 5m) or manual triggers enqueue jobs. Stateless worker loops process queue tasks concurrently, making horizontal scaling simple.',
+    description: 'Background cron jobs or manual triggers enqueue ingestion tasks. Stateless worker loops process queue tasks concurrently, making horizontal scaling effortless.',
     badge: 'Step 4 of 7'
   },
   {
@@ -43,55 +43,70 @@ const TOUR_STEPS = [
     icon: Terminal,
     color: '#10b981',
     title: 'System Pipeline Logs',
-    subtitle: 'Authentic macOS Terminal Viewer',
-    description: 'Inspect real-time structured logs in a macOS style window frame with traffic light buttons, live streaming, level highlights, search filtering, and log export.',
+    subtitle: 'Authentic macOS Terminal Console',
+    description: 'Inspect real-time structured logs in a macOS style window frame with traffic light buttons, live streaming, log level filtering, and download capabilities.',
     badge: 'Step 5 of 7'
   },
   {
     targetId: 'trigger-fetch-btn',
     icon: Play,
-    color: '#f59e0b',
-    title: 'Manual Fetch Ingestion Trigger',
+    color: '#10b981',
+    title: 'Manual Ingestion Trigger',
     subtitle: 'On-Demand Execution',
-    description: 'Click "Trigger Fetch Run" at any time to push an immediate ingestion task to the queue and observe pipeline metrics update in real time.',
+    description: 'Click "Trigger Ingestion Run" at any time to push an immediate ingestion task to the queue and observe real-time rate limiting, retries, and deduplication.',
     badge: 'Step 6 of 7'
   },
   {
     targetId: 'listings-explorer-section',
     icon: Database,
     color: '#a855f7',
-    title: 'Deduplicated SQLite Explorer',
-    subtitle: 'Normalized Listings Storage',
-    description: 'Listings are normalized into a canonical schema and deduplicated on unique IDs in SQLite. Search, filter by source, or open direct application links.',
+    title: 'Deduplicated SQLite Feed Explorer',
+    subtitle: 'Normalized Job Listings Storage',
+    description: 'Raw listings are normalized into a canonical schema and deduplicated on unique IDs in SQLite. Search, filter by source, or open direct application links.',
     badge: 'Step 7 of 7'
   }
 ];
 
 export function InteractiveTour({ isOpen, onClose }) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [targetRect, setTargetRect] = useState(null);
 
-  useEffect(() => {
+  const updateTargetSpotlight = () => {
     if (!isOpen) {
-      // Remove any active spotlight highlights when tour closes
-      document.querySelectorAll('.tour-spotlight-active').forEach(el => {
-        el.classList.remove('tour-spotlight-active');
-      });
+      setTargetRect(null);
       return;
     }
 
     const step = TOUR_STEPS[currentStep];
     if (step && step.targetId) {
-      // Clear previous spotlights
-      document.querySelectorAll('.tour-spotlight-active').forEach(el => {
-        el.classList.remove('tour-spotlight-active');
-      });
-
       const targetEl = document.getElementById(step.targetId);
       if (targetEl) {
-        targetEl.classList.add('tour-spotlight-active');
         targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Allow time for smooth scroll to finish before calculating exact bounds
+        setTimeout(() => {
+          const rect = targetEl.getBoundingClientRect();
+          setTargetRect({
+            top: rect.top + window.scrollY - 6,
+            left: rect.left + window.scrollX - 6,
+            width: rect.width + 12,
+            height: rect.height + 12
+          });
+        }, 300);
+      } else {
+        setTargetRect(null);
       }
     }
+  };
+
+  useEffect(() => {
+    updateTargetSpotlight();
+    window.addEventListener('resize', updateTargetSpotlight);
+    window.addEventListener('scroll', updateTargetSpotlight);
+    return () => {
+      window.removeEventListener('resize', updateTargetSpotlight);
+      window.removeEventListener('scroll', updateTargetSpotlight);
+    };
   }, [isOpen, currentStep]);
 
   if (!isOpen) return null;
@@ -101,7 +116,6 @@ export function InteractiveTour({ isOpen, onClose }) {
   const isLastStep = currentStep === TOUR_STEPS.length - 1;
 
   const markTourCompleted = () => {
-    // Save completion state in localStorage & Cookie so it persists across sessions
     localStorage.setItem('has_completed_pipeline_tour', 'true');
     document.cookie = "has_completed_pipeline_tour=true; max-age=31536000; path=/";
   };
@@ -128,13 +142,56 @@ export function InteractiveTour({ isOpen, onClose }) {
 
   return (
     <>
-      {/* Dark Blur Overlay */}
-      <div className="tour-overlay" onClick={handleDismiss} />
+      {/* Semi-transparent Backdrop Overlay */}
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(3, 7, 18, 0.75)',
+          backdropFilter: 'blur(3px)',
+          zIndex: 9000
+        }}
+        onClick={handleDismiss}
+      />
 
-      {/* Tour Step Tooltip Modal Card */}
-      <div className="tour-card" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-        
-        {/* Header */}
+      {/* Dynamic Glowing Spotlight Frame Box directly over target element */}
+      {targetRect && (
+        <div
+          style={{
+            position: 'absolute',
+            top: `${targetRect.top}px`,
+            left: `${targetRect.left}px`,
+            width: `${targetRect.width}px`,
+            height: `${targetRect.height}px`,
+            border: `2px solid ${step.color}`,
+            borderRadius: '12px',
+            boxShadow: `0 0 0 9999px rgba(3, 7, 18, 0.6), 0 0 25px ${step.color}aa`,
+            pointerEvents: 'none',
+            zIndex: 9005,
+            transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
+        />
+      )}
+
+      {/* Tour Step Tooltip Card */}
+      <div
+        className="tour-card"
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 9010,
+          width: '90%',
+          maxWidth: '500px',
+          background: '#0f172a',
+          border: `1.5px solid ${step.color}`,
+          boxShadow: `0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px ${step.color}33`,
+          borderRadius: '16px',
+          padding: '1.5rem'
+        }}
+      >
+        {/* Step Badge & Close Button */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <span style={{
             fontSize: '0.72rem',
@@ -163,7 +220,7 @@ export function InteractiveTour({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* Step Content */}
+        {/* Step Title & Icon */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
           <div style={{
             background: `${step.color}20`,
@@ -175,7 +232,7 @@ export function InteractiveTour({ isOpen, onClose }) {
             justifyContent: 'center',
             flexShrink: 0
           }}>
-            <IconComponent size={28} color={step.color} />
+            <IconComponent size={26} color={step.color} />
           </div>
 
           <div>
@@ -196,12 +253,12 @@ export function InteractiveTour({ isOpen, onClose }) {
           <div style={{
             width: `${((currentStep + 1) / TOUR_STEPS.length) * 100}%`,
             height: '100%',
-            background: `linear-gradient(90deg, ${step.color}, #6366f1)`,
+            background: step.color,
             transition: 'width 0.3s ease'
           }} />
         </div>
 
-        {/* Controls */}
+        {/* Step Actions */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           
           <button
@@ -222,7 +279,7 @@ export function InteractiveTour({ isOpen, onClose }) {
             <ArrowLeft size={16} /> Back
           </button>
 
-          {/* Dots */}
+          {/* Dots Indicator */}
           <div style={{ display: 'flex', gap: '6px' }}>
             {TOUR_STEPS.map((_, idx) => (
               <span
@@ -243,10 +300,10 @@ export function InteractiveTour({ isOpen, onClose }) {
           <button
             onClick={handleNext}
             style={{
-              background: `linear-gradient(135deg, ${step.color} 0%, #4f46e5 100%)`,
+              background: step.color,
               border: 'none',
               color: '#ffffff',
-              padding: '0.55rem 1.2rem',
+              padding: '0.55rem 1.25rem',
               borderRadius: '8px',
               fontSize: '0.82rem',
               fontWeight: 700,
@@ -254,7 +311,7 @@ export function InteractiveTour({ isOpen, onClose }) {
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              boxShadow: `0 4px 12px ${step.color}40`
+              boxShadow: `0 4px 14px ${step.color}50`
             }}
           >
             {isLastStep ? (
