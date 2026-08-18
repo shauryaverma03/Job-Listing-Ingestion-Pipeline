@@ -1,8 +1,18 @@
-import React from 'react';
-import { Sparkles, Play, Terminal, ShieldCheck, Gauge, Cpu, Database, Activity, RefreshCw, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Sparkles, Play, Terminal, ShieldCheck, Gauge, Cpu, Database, RefreshCw } from 'lucide-react';
 import { ThemeSelector } from './ThemeSelector';
 
 export function HeroFrontPage({ onStartTour, onOpenTerminal, onTriggerFetch, isTriggering, currentTheme, onSelectTheme, lastUpdated }) {
+  const [liveTime, setLiveTime] = useState(() => new Date());
+
+  // Smooth 1-second clock ticker for zero-lag real-time sync clock
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setLiveTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div
       id="hero-header-section"
@@ -37,11 +47,9 @@ export function HeroFrontPage({ onStartTour, onOpenTerminal, onTriggerFetch, isT
             INGESTION ENGINE ONLINE
           </div>
 
-          {lastUpdated && (
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-              <RefreshCw size={12} className="spin" /> Sync {new Date(lastUpdated).toLocaleTimeString()}
-            </span>
-          )}
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--font-mono)' }}>
+            <RefreshCw size={12} className="spin" /> Sync {liveTime.toLocaleTimeString()}
+          </span>
         </div>
 
         {/* Theme Palette Switcher */}

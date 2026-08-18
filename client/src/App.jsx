@@ -89,10 +89,10 @@ export default function App() {
     }
   }, [page, search, sourceFilter]);
 
-  // Polling status every 3 seconds
+  // Polling status every 1 second
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 3000);
+    const interval = setInterval(fetchStatus, 1000);
     return () => clearInterval(interval);
   }, [fetchStatus]);
 
