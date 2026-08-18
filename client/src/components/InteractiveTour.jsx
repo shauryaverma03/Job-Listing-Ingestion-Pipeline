@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sparkles, ArrowRight, ArrowLeft, X, CheckCircle, ShieldAlert, Gauge, Cpu, Terminal, Database, Play } from 'lucide-react';
 
 const TOUR_STEPS = [
@@ -6,8 +6,8 @@ const TOUR_STEPS = [
     targetId: 'hero-header-section',
     icon: Sparkles,
     color: '#8b5cf6',
-    title: 'Welcome to Job Pulse Ingestion Engine',
-    subtitle: 'Resilient Scraper Architecture Overview',
+    title: 'Welcome to Job Ingestion Pipeline',
+    subtitle: 'Resilient Scraper Architecture',
     description: 'This pipeline automatically ingests job listings on a schedule or on-demand without authentication walls. Let us explore each resilience component in action!',
     badge: 'Step 1 of 7'
   },
@@ -83,12 +83,11 @@ export function InteractiveTour({ isOpen, onClose }) {
       if (targetEl) {
         targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
-        // Allow time for smooth scroll to finish before calculating exact bounds
         setTimeout(() => {
           const rect = targetEl.getBoundingClientRect();
           setTargetRect({
-            top: rect.top + window.scrollY - 6,
-            left: rect.left + window.scrollX - 6,
+            viewportTop: Math.max(0, rect.top - 6),
+            viewportLeft: Math.max(0, rect.left - 6),
             width: rect.width + 12,
             height: rect.height + 12
           });
@@ -142,30 +141,62 @@ export function InteractiveTour({ isOpen, onClose }) {
 
   return (
     <>
-      {/* Semi-transparent Backdrop Overlay */}
-      <div
+      {/* SVG Cutout Mask Overlay - Target Element Shines Through 100% Bright */}
+      <svg
         style={{
           position: 'fixed',
-          inset: 0,
-          background: 'rgba(3, 7, 18, 0.75)',
-          backdropFilter: 'blur(3px)',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          pointerEvents: 'auto',
           zIndex: 9000
         }}
         onClick={handleDismiss}
-      />
+      >
+        <defs>
+          <mask id="tour-spotlight-mask">
+            {/* White background fills mask (darkens screen) */}
+            <rect x="0" y="0" width="100%" height="100%" fill="white" />
+            
+            {/* Black cutout rectangle over target element */}
+            {targetRect && (
+              <rect
+                x={targetRect.viewportLeft}
+                y={targetRect.viewportTop}
+                width={targetRect.width}
+                height={targetRect.height}
+                rx="10"
+                ry="10"
+                fill="black"
+              />
+            )}
+          </mask>
+        </defs>
 
-      {/* Dynamic Glowing Spotlight Frame Box directly over target element */}
+        {/* Dark overlay with literal cutout hole */}
+        <rect
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          fill="rgba(3, 7, 18, 0.82)"
+          mask="url(#tour-spotlight-mask)"
+        />
+      </svg>
+
+      {/* Dynamic Glowing Spotlight Frame Box over target element */}
       {targetRect && (
         <div
           style={{
-            position: 'absolute',
-            top: `${targetRect.top}px`,
-            left: `${targetRect.left}px`,
+            position: 'fixed',
+            top: `${targetRect.viewportTop}px`,
+            left: `${targetRect.viewportLeft}px`,
             width: `${targetRect.width}px`,
             height: `${targetRect.height}px`,
-            border: `2px solid ${step.color}`,
+            border: `2.5px solid ${step.color}`,
             borderRadius: '12px',
-            boxShadow: `0 0 0 9999px rgba(3, 7, 18, 0.6), 0 0 25px ${step.color}aa`,
+            boxShadow: `0 0 25px ${step.color}aa, inset 0 0 15px ${step.color}33`,
             pointerEvents: 'none',
             zIndex: 9005,
             transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
@@ -173,7 +204,7 @@ export function InteractiveTour({ isOpen, onClose }) {
         />
       )}
 
-      {/* Tour Step Tooltip Card */}
+      {/* Tour Step Tooltip Modal Card */}
       <div
         className="tour-card"
         style={{
@@ -183,10 +214,10 @@ export function InteractiveTour({ isOpen, onClose }) {
           transform: 'translate(-50%, -50%)',
           zIndex: 9010,
           width: '90%',
-          maxWidth: '500px',
+          maxWidth: '480px',
           background: '#0f172a',
           border: `1.5px solid ${step.color}`,
-          boxShadow: `0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px ${step.color}33`,
+          boxShadow: `0 25px 60px rgba(0, 0, 0, 0.85), 0 0 30px ${step.color}33`,
           borderRadius: '16px',
           padding: '1.5rem'
         }}
