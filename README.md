@@ -6,6 +6,17 @@ Demonstrates resilient ingestion architecture using production-oriented reliabil
 
 ---
 
+## 🔗 Live Demo & Submission Links
+
+- 🖥️ **Live Deployed App & Dashboard**: [https://job-listing-ingestion-pipeline.onrender.com](https://job-listing-ingestion-pipeline.onrender.com)
+- 📡 **Health Check Endpoint**: [https://job-listing-ingestion-pipeline.onrender.com/api/health](https://job-listing-ingestion-pipeline.onrender.com/api/health)
+- 📊 **Pipeline Status & Metrics API**: [https://job-listing-ingestion-pipeline.onrender.com/api/status](https://job-listing-ingestion-pipeline.onrender.com/api/status)
+- 💼 **Job Listings API**: [https://job-listing-ingestion-pipeline.onrender.com/api/listings](https://job-listing-ingestion-pipeline.onrender.com/api/listings)
+- 📄 **1-Page Decisions Document**: [`DECISIONS.md`](file:///Users/shauryaverma/Desktop/ACDYON%20TECHNOLOGIES%20Assignment/DECISIONS.md) ([GitHub View](https://github.com/shauryaverma03/Job-Listing-Ingestion-Pipeline/blob/main/DECISIONS.md))
+- 🐙 **GitHub Repository**: [https://github.com/shauryaverma03/Job-Listing-Ingestion-Pipeline](https://github.com/shauryaverma03/Job-Listing-Ingestion-Pipeline)
+
+---
+
 ## 🏗️ Architecture Diagram
 
 ```mermaid
