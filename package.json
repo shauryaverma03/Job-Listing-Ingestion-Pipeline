@@ -10,7 +10,8 @@
     "client": "npm --prefix client run dev",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "test": "node --test tests/*.test.js",
-    "postinstall": "cd client && npm install"
+    "build": "cd client && npm install --include=dev && npm run build",
+    "postinstall": "cd client && npm install --include=dev"
   },
   "dependencies": {
     "better-sqlite3": "^11.8.0",

@@ -101,19 +101,19 @@ flowchart TD
 
 ---
 
-## 🚀 Running Locally
+## 🚀 Running & Deployment
 
-### 1. Installation
+### Local Setup
 ```bash
 npm install
-```
-
-### 2. Run Backend & Frontend Concurrently
-```bash
 npm run dev
 ```
 - **Dashboard**: `http://localhost:5173`
 - **API Server**: `http://localhost:5001/api/health`
+
+### Render Deployment Settings
+- **Build Command**: `npm install && npm run build`
+- **Start Command**: `npm start`
 
 ### 3. Run Automated Tests
 ```bash
