@@ -1,8 +1,8 @@
 # Resilient Job Listing Ingestion Pipeline
 
-A production-grade, fault-tolerant job listing ingestion pipeline and monitoring dashboard built for the **ACDYON Technologies Engineering Challenge — Part 1: "Getting Data Out of a Platform That Doesn't Want You To"**.
+A fault-tolerant job listing ingestion pipeline and monitoring dashboard built for the **ACDYON Technologies Engineering Challenge — Part 1: "Getting Data Out of a Platform That Doesn't Want You To"**.
 
-Demonstrates resilient, rate-limited ingestion architecture using low-risk public structured feeds (RemoteOK API & WeWorkRemotely RSS). **Does NOT scrape live LinkedIn accounts or attempt anti-bot/CAPTCHA bypass.**
+Demonstrates resilient ingestion architecture using production-oriented reliability patterns on low-risk public structured feeds (RemoteOK API & WeWorkRemotely RSS). **Does NOT scrape live LinkedIn accounts or attempt anti-bot/CAPTCHA bypass.**
 
 ---
 
