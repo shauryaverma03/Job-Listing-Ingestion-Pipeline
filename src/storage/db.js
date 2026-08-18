@@ -11,7 +11,7 @@ export function initDatabase() {
     db = new Database(config.DB_PATH);
     db.pragma('journal_mode = WAL');
     
-    // Create listings table
+    // Create listings table with canonical schema
     db.exec(`
       CREATE TABLE IF NOT EXISTS listings (
         id TEXT PRIMARY KEY,
@@ -20,6 +20,7 @@ export function initDatabase() {
         location TEXT,
         url TEXT NOT NULL,
         source TEXT NOT NULL,
+        published_at TEXT,
         fetched_at TEXT NOT NULL,
         tags TEXT,
         salary TEXT,
@@ -35,7 +36,7 @@ export function initDatabase() {
       CREATE TABLE IF NOT EXISTS fetch_runs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         source TEXT NOT NULL,
-        status TEXT NOT NULL, -- 'SUCCESS', 'FAILED', 'FALLBACK_SUCCESS'
+        status TEXT NOT NULL,
         items_count INTEGER DEFAULT 0,
         items_new INTEGER DEFAULT 0,
         error_message TEXT,
@@ -43,6 +44,13 @@ export function initDatabase() {
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // Migration helper for existing local DB files
+    try {
+      db.exec('ALTER TABLE listings ADD COLUMN published_at TEXT;');
+    } catch {
+      // Column already exists
+    }
 
     logger.info('Storage', `Database initialized at ${config.DB_PATH}`);
     return db;
@@ -58,13 +66,14 @@ export function saveListings(listings, isStale = false) {
   let updatedCount = 0;
 
   const insertOrUpdateStmt = database.prepare(`
-    INSERT INTO listings (id, title, company, location, url, source, fetched_at, tags, salary, description, is_stale, updated_at)
-    VALUES (@id, @title, @company, @location, @url, @source, @fetchedAt, @tags, @salary, @description, @isStale, CURRENT_TIMESTAMP)
+    INSERT INTO listings (id, title, company, location, url, source, published_at, fetched_at, tags, salary, description, is_stale, updated_at)
+    VALUES (@id, @title, @company, @location, @url, @source, @publishedAt, @fetchedAt, @tags, @salary, @description, @isStale, CURRENT_TIMESTAMP)
     ON CONFLICT(id) DO UPDATE SET
       title = excluded.title,
       company = excluded.company,
       location = excluded.location,
       url = excluded.url,
+      published_at = excluded.published_at,
       fetched_at = excluded.fetched_at,
       tags = excluded.tags,
       salary = excluded.salary,
@@ -80,11 +89,12 @@ export function saveListings(listings, isStale = false) {
       
       insertOrUpdateStmt.run({
         id: item.id,
-        title: item.title || 'Untitled',
+        title: item.title || 'Untitled Role',
         company: item.company || 'Unknown Company',
         location: item.location || 'Remote',
         url: item.url || '#',
         source: item.source || 'Unknown',
+        publishedAt: item.publishedAt || item.fetchedAt || new Date().toISOString(),
         fetchedAt: item.fetchedAt || new Date().toISOString(),
         tags: tagsStr,
         salary: item.salary || '',
@@ -110,7 +120,7 @@ export function saveListings(listings, isStale = false) {
   return { insertedCount, updatedCount, totalSaved: listings.length };
 }
 
-export function getListings({ page = 1, limit = 10, search = '', source = '' }) {
+export function getListings({ page = 1, limit = 12, search = '', source = '' }) {
   const database = initDatabase();
   const offset = (page - 1) * limit;
   
@@ -133,7 +143,7 @@ export function getListings({ page = 1, limit = 10, search = '', source = '' }) 
   const total = totalStmt.get(params).count;
 
   const listingsStmt = database.prepare(`
-    SELECT id, title, company, location, url, source, fetched_at as fetchedAt, tags, salary, description, is_stale as isStale, created_at as createdAt
+    SELECT id, title, company, location, url, source, published_at as publishedAt, fetched_at as fetchedAt, tags, salary, description, is_stale as isStale, created_at as createdAt
     FROM listings
     ${whereSql}
     ORDER BY fetched_at DESC
@@ -171,7 +181,7 @@ export function recordFetchRun({ source, status, itemsCount = 0, itemsNew = 0, e
 export function getLatestListings(limit = 100) {
   const database = initDatabase();
   const stmt = database.prepare(`
-    SELECT id, title, company, location, url, source, fetched_at as fetchedAt, tags, salary, description, is_stale as isStale
+    SELECT id, title, company, location, url, source, published_at as publishedAt, fetched_at as fetchedAt, tags, salary, description, is_stale as isStale
     FROM listings
     ORDER BY fetched_at DESC
     LIMIT ?
@@ -179,7 +189,7 @@ export function getLatestListings(limit = 100) {
   const rows = stmt.all(limit);
   return rows.map(r => ({
     ...r,
-    isStale: true, // when served as fallback cache, marked as stale
+    isStale: true,
     tags: r.tags ? (r.tags.startsWith('[') ? JSON.parse(r.tags) : r.tags.split(',')) : []
   }));
 }

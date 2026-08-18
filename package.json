@@ -9,6 +9,7 @@
     "server": "node src/server.js",
     "client": "npm --prefix client run dev",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "test": "node --test tests/*.test.js",
     "postinstall": "cd client && npm install"
   },
   "dependencies": {

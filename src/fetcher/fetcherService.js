@@ -10,6 +10,36 @@ import { saveListings, getLatestListings, recordFetchRun } from '../storage/db.j
 export const rateLimiterManager = new RateLimiterManager(config.RATE_LIMIT_PER_MIN);
 export const circuitBreakerManager = new CircuitBreakerManager(config.CB_FAILURE_THRESHOLD, config.CB_COOLDOWN_MS);
 
+// Failure Simulation State (for demonstration/evaluation testing)
+const simulatedFailures = {
+  RemoteOK: false,
+  WeWorkRemotely: false
+};
+
+export function setSimulatedFailure(sourceName, isFailing = true) {
+  simulatedFailures[sourceName] = Boolean(isFailing);
+  logger.warn('Simulation', `Simulated failure for source "${sourceName}" set to: ${isFailing}`);
+}
+
+export function getSimulatedFailures() {
+  return { ...simulatedFailures };
+}
+
+export function resetSimulatedFailures() {
+  simulatedFailures.RemoteOK = false;
+  simulatedFailures.WeWorkRemotely = false;
+  
+  // Also reset circuit breakers to CLOSED state
+  for (const name of ['RemoteOK', 'WeWorkRemotely']) {
+    const breaker = circuitBreakerManager.getBreaker(name);
+    breaker.state = 'CLOSED';
+    breaker.consecutiveFailures = 0;
+    breaker.nextAttemptAllowedAt = 0;
+  }
+
+  logger.info('Simulation', 'Reset all simulated failures and circuit breaker states to CLOSED');
+}
+
 export async function executeFetchTask(jobData = {}) {
   const startTime = Date.now();
   const primaryKey = 'RemoteOK';
@@ -30,6 +60,12 @@ export async function executeFetchTask(jobData = {}) {
 
       // Execute with circuit breaker & retry
       const listings = await primaryBreaker.execute(async () => {
+        if (simulatedFailures[primaryKey]) {
+          const err = new Error(`[Simulated Failure Mode] Primary source ${primaryKey} is returning simulated HTTP 503 error.`);
+          err.status = 503;
+          throw err;
+        }
+
         return await withRetry(() => fetchRemoteOK(config.PRIMARY_SOURCE_URL), {
           sourceName: primaryKey,
           maxRetries: config.MAX_RETRIES
@@ -78,6 +114,12 @@ export async function executeFetchTask(jobData = {}) {
       await rateLimiterManager.acquireToken(secondaryKey);
 
       const listings = await secondaryBreaker.execute(async () => {
+        if (simulatedFailures[secondaryKey]) {
+          const err = new Error(`[Simulated Failure Mode] Secondary source ${secondaryKey} is returning simulated HTTP 500 error.`);
+          err.status = 500;
+          throw err;
+        }
+
         return await withRetry(() => fetchWeWorkRemotely(config.SECONDARY_SOURCE_URL), {
           sourceName: secondaryKey,
           maxRetries: config.MAX_RETRIES

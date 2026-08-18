@@ -21,36 +21,46 @@ export async function fetchWeWorkRemotely(sourceUrl) {
     throw error;
   }
 
-  if (!feed || !feed.items) {
-    throw new Error('WeWorkRemotely RSS feed returned empty or invalid data');
+  if (!feed || !feed.items || !Array.isArray(feed.items)) {
+    throw new Error('WeWorkRemotely RSS feed returned empty or invalid data structure');
   }
 
-  const normalized = feed.items.map(item => {
-    // WeWorkRemotely title is often formatted as: "Company Name: Position Title (Location/Type)"
-    let company = 'WeWorkRemotely Listing';
-    let title = item.title || 'Remote Job';
+  const normalized = [];
 
-    if (item.title && item.title.includes(':')) {
-      const parts = item.title.split(':');
-      company = parts[0].trim();
-      title = parts.slice(1).join(':').trim();
+  for (const item of feed.items) {
+    try {
+      if (!item || typeof item !== 'object') continue;
+
+      let company = 'WeWorkRemotely Listing';
+      let title = item.title || 'Remote Role';
+
+      if (item.title && item.title.includes(':')) {
+        const parts = item.title.split(':');
+        company = parts[0].trim();
+        title = parts.slice(1).join(':').trim();
+      }
+
+      // Deterministic ID hash based on link or guid
+      const uniqueHash = crypto.createHash('md5').update(item.guid || item.link || item.title || 'wwr').digest('hex').substring(0, 12);
+
+      normalized.push({
+        id: `wwr-${uniqueHash}`,
+        title,
+        company,
+        location: 'Remote',
+        url: item.link || sourceUrl,
+        source: 'WeWorkRemotely',
+        publishedAt: item.isoDate || item.pubDate ? new Date(item.isoDate || item.pubDate).toISOString() : new Date().toISOString(),
+        fetchedAt: new Date().toISOString(),
+        tags: item.categories || ['Remote', 'Tech'],
+        salary: '',
+        description: item.contentSnippet ? item.contentSnippet.substring(0, 800) : (item.content ? item.content.substring(0, 800) : ''),
+        isStale: false
+      });
+    } catch (itemErr) {
+      logger.warn('Fetcher', `Skipping malformed WeWorkRemotely RSS item: ${itemErr.message}`);
     }
-
-    const uniqueHash = crypto.createHash('md5').update(item.guid || item.link || item.title).digest('hex').substring(0, 12);
-
-    return {
-      id: `wwr-${uniqueHash}`,
-      title,
-      company,
-      location: 'Remote',
-      url: item.link || sourceUrl,
-      source: 'WeWorkRemotely',
-      fetchedAt: new Date().toISOString(),
-      tags: item.categories || ['Remote', 'Tech'],
-      salary: '',
-      description: item.contentSnippet ? item.contentSnippet.substring(0, 500) : (item.content ? item.content.substring(0, 500) : '')
-    };
-  });
+  }
 
   logger.info('Fetcher', `Successfully normalized ${normalized.length} listings from WeWorkRemotely`);
   return normalized;

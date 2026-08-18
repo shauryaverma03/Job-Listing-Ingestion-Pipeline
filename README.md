@@ -1,185 +1,150 @@
-# Resilient Job Ingestion Pipeline & Dashboard
+# Resilient Job Listing Ingestion Pipeline
 
-A production-grade, fault-tolerant job listing ingestion pipeline and monitoring dashboard built with Node.js, Express, SQLite, and React + Vite.
+A production-grade, fault-tolerant job listing ingestion pipeline and monitoring dashboard built for the **ACDYON Technologies Engineering Challenge — Part 1: "Getting Data Out of a Platform That Doesn't Want You To"**.
 
-Designed as an architectural demonstration of resilient distributed ingestion patterns — including **Token-Bucket Rate Limiting**, **Exponential Backoff with Jitter**, **3-State Circuit Breakers**, **Stateless Worker Pool Queues**, **Multi-Tier Fallbacks**, and **Storage Deduplication**.
-
----
-
-## Key Resilience Architecture Features
-
-### 1. Fetcher Service (`/src/fetcher/`)
-- Ingests public job postings on a automated schedule (every 5 minutes via `node-cron` or `setInterval`) or via manual API trigger.
-- **Primary Source**: [RemoteOK API](https://remoteok.com/api) (JSON endpoint).
-- **Secondary Source**: [WeWorkRemotely RSS](https://weworkremotely.com/remote-jobs.rss) (RSS XML feed).
-- Normalizes disparate feed formats into a uniform canonical schema:
-  `{ id, title, company, location, url, source, fetchedAt, tags, salary, description, isStale }`.
-
-### 2. Token-Bucket Rate Limiter (`/src/rateLimiter/`)
-- Custom `TokenBucketRateLimiter` capping requests per source per minute.
-- Configurable via `RATE_LIMIT_PER_MIN=10` env variable.
-- Supports continuous token refills and async token acquisition waiting.
-
-### 3. Retry with Exponential Backoff + Jitter (`/src/fetcher/retry.js`)
-- Wraps external network calls. Automatically retries transient errors (timeouts, HTTP 5xx, HTTP 429, network failures).
-- Formula: `delay = Math.min(maxDelay, baseDelay * (2 ^ attempt) + randomJitter)`.
-- Max 3-4 attempts (configurable via `MAX_RETRIES=3`).
-
-### 4. 3-State Circuit Breaker (`/src/circuitBreaker/`)
-- State Machine: `CLOSED` ➔ `OPEN` ➔ `HALF_OPEN` ➔ `CLOSED`.
-- Trips to `OPEN` after `CB_FAILURE_THRESHOLD=5` consecutive errors to protect external services and fast-fail pipeline tasks.
-- Enforces a `CB_COOLDOWN_MS=30000` (30s) cooldown before transitioning to `HALF_OPEN` to test recovery with a trial request.
-- State metrics exposed live via `/api/status`.
-
-### 5. Queue & Worker Pool (`/src/queue/`)
-- In-memory async job queue processed by `WORKER_CONCURRENCY=2` worker loops.
-- **Stateless Worker Design**: Workers pull pending tasks, execute fetch routines, update SQLite storage, and record health metrics.
-- *Horizontal Scaling Note*: In multi-node production environments (Kubernetes, AWS ECS, Render instances), the queue can be swapped 1-to-1 with Redis (`BullMQ`) without changing worker logic.
-
-### 6. Multi-Tier Fallback / Plan B (`/src/fetcher/fetcherService.js`)
-- **Tier 1**: Fetch from Primary Source (`RemoteOK`).
-- **Tier 2**: If Primary Circuit Breaker is `OPEN` or fetch fails, automatically fall back to Secondary Source (`WeWorkRemotely RSS`).
-- **Tier 3**: If both live sources fail or are `OPEN`, serve last-known-good cached data from SQLite storage, marked with a prominent `isStale: true` flag.
-
-### 7. Storage & Deduplication (`/src/storage/`)
-- Zero-dependency local persistence using `better-sqlite3`.
-- Deduplicates incoming listings based on unique normalized `id` and `url`/`title+company` hash. Updates existing records or inserts new ones.
-
-### 8. Structured Logging (`/src/logger/`)
-- ISO-timestamped console output with component tags `[Fetcher]`, `[RateLimiter]`, `[CircuitBreaker]`, `[Queue]`, `[Storage]`.
-- Rolling in-memory log buffer accessible via API `/api/logs` and visible in the React Dashboard modal.
+Demonstrates resilient, rate-limited ingestion architecture using low-risk public structured feeds (RemoteOK API & WeWorkRemotely RSS). **Does NOT scrape live LinkedIn accounts or attempt anti-bot/CAPTCHA bypass.**
 
 ---
 
-## API Reference
+## 🏗️ Architecture Diagram
+
+```mermaid
+flowchart TD
+    Cron[Cron Schedule / Manual Trigger] --> Queue[In-Memory Worker Queue]
+    Queue --> Worker[Stateless Worker Pool]
+    
+    Worker --> RL[Token-Bucket Rate Limiter 10 req/min]
+    RL --> CB_Primary{Circuit Breaker: Primary Source RemoteOK}
+    
+    CB_Primary -- CLOSED / HALF-OPEN --> Retry_Primary[Retry with Exp Backoff + Jitter]
+    Retry_Primary --> PrimaryAPI[RemoteOK API]
+    
+    CB_Primary -- OPEN / Failure --> CB_Secondary{Circuit Breaker: Secondary Source WeWorkRemotely}
+    Retry_Primary -- Failed after retries --> CB_Secondary
+    
+    CB_Secondary -- CLOSED / HALF-OPEN --> Retry_Secondary[Retry with Exp Backoff + Jitter]
+    Retry_Secondary --> SecondaryRSS[WeWorkRemotely RSS Feed]
+    
+    CB_Secondary -- OPEN / Failure --> CacheFallback[Last-Known-Good SQLite Cache]
+    Retry_Secondary -- Failed after retries --> CacheFallback
+    
+    PrimaryAPI --> Normalize[Parser & Schema Normalizer]
+    SecondaryRSS --> Normalize
+    CacheFallback --> StaleMark[Mark isStale = true]
+    
+    Normalize --> Dedupr[Deduplicator ON CONFLICT id]
+    StaleMark --> Dedupr
+    
+    Dedupr --> DB[(SQLite Database WAL Mode)]
+    DB --> ExpressAPI[Express REST API]
+    ExpressAPI --> Health[GET /api/health]
+    ExpressAPI --> Status[GET /api/status]
+    ExpressAPI --> Listings[GET /api/listings]
+    ExpressAPI --> Dashboard[React + Vite Dashboard]
+```
+
+---
+
+## ⚡ Core Features
+
+- **Public Feed Ingestion**: Ingests structured job postings from RemoteOK JSON API and WeWorkRemotely RSS.
+- **Token-Bucket Rate Limiter**: Caps requests per source per minute (`RATE_LIMIT_PER_MIN=10`) with continuous token refills.
+- **Retry + Exponential Backoff + Jitter**: Automatically retries 5xx server errors, 429 rate limits, and network timeouts up to 3 times while skipping non-retryable 4xx errors.
+- **3-State Circuit Breaker**: State machine (`CLOSED` ➔ `OPEN` ➔ `HALF_OPEN` ➔ `CLOSED`) that trips after 5 consecutive failures with a 30-second cooldown period.
+- **Multi-Tier Fallback Strategy**: Primary Source (`RemoteOK`) ➔ Secondary Source (`WeWorkRemotely RSS`) ➔ Last-Known-Good SQLite Cache (`isStale: true`).
+- **Deterministic Deduplication**: Prevents duplicate insertions across runs using stable source IDs and deterministic URL/company hashes.
+- **System Pipeline Logs**: Native macOS terminal window UI with live log streaming, grep filtering, level badges, and export capabilities.
+- **Failure Simulation Engine**: Interactive UI buttons and API endpoints to simulate primary failure and test recovery live.
+
+---
+
+## 🛡️ Detection Surface & ToS Boundary Analysis
+
+### Detection Surface Risk Matrix
+
+| Detection Vector | Risk Severity | Pipeline Mitigation Strategy | Status |
+| :--- | :--- | :--- | :--- |
+| **Request Frequency & Bursts** | High | Token-bucket rate limiter enforces strict request-per-minute caps per source | **Mitigated** |
+| **Request Timing & Patterns** | Medium | Exponential backoff includes random delay jitter (0-400ms) to randomize intervals | **Mitigated** |
+| **Browser Fingerprinting** | High | Avoided entirely by using lightweight HTTP client instead of headless browser automation | **Avoided** |
+| **CAPTCHA Challenges** | Critical | Not attempted. Pipeline relies on public structured endpoints rather than anti-bot bypass | **Avoided** |
+| **IP Rate Limits & Throttling** | High | Respects HTTP 429 responses with exponential backoff & trips circuit breaker when blocked | **Mitigated** |
+| **Session Tracking** | Low | Uses stateless public endpoints requiring zero authentication cookies or login tokens | **Avoided** |
+
+### Terms of Service & Legal Boundary Statement
+- **Public Low-Risk Sources**: The live demo strictly utilizes public JSON APIs and RSS feeds that permit automated feed consumption.
+- **No Access Control Evasion**: The pipeline does **NOT** attempt to bypass login walls, CAPTCHAs, authentication tokens, or anti-bot defenses on platforms like LinkedIn, Indeed, or Naukri.
+- **ToS Compliance**: If a platform explicitly prohibits automated access via ToS, the system relies on official partner APIs or public feeds.
+
+---
+
+## 💻 Tech Stack
+
+- **Backend**: Node.js, Express, `better-sqlite3` (SQLite WAL mode), `rss-parser`, `node-cron`
+- **Frontend**: React, Vite, Glassmorphism Vanilla CSS, Lucide React Icons
+- **Testing**: Node.js native test runner (`node --test`)
+- **Dev Tooling**: `concurrently`, `dotenv`
+
+---
+
+## 📡 REST API Endpoints
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
+| `GET` | `/api/health` | Service health status, uptime seconds, and DB connectivity |
 | `GET` | `/api/listings` | Paginated, searchable job listings (`?page=1&limit=12&search=react&source=RemoteOK`) |
-| `GET` | `/api/status` | Pipeline health: total requests, success rate %, circuit breaker states, rate limiter tokens |
+| `GET` | `/api/status` | Pipeline metrics: total requests, success rate %, circuit breaker states, rate limit tokens |
 | `POST` | `/api/fetch/trigger` | Manually enqueue an immediate ingestion job |
+| `POST` | `/api/simulate/failure` | Demo failure simulation (`{ "source": "RemoteOK", "enable": true }`) |
+| `POST` | `/api/simulate/reset` | Reset all failure simulations and restore circuit breakers to CLOSED |
 | `GET` | `/api/logs` | Real-time structured console logs stream |
 
 ---
 
-## Quick Start & Installation
+## 🚀 Running Locally
 
-### Prerequisites
-- **Node.js**: v18.0.0 or higher
-- **npm**: v9.0.0 or higher
+### 1. Installation
+```bash
+npm install
+```
 
-### Single Command Setup & Run
+### 2. Run Backend & Frontend Concurrently
+```bash
+npm run dev
+```
+- **Dashboard**: `http://localhost:5173`
+- **API Server**: `http://localhost:5001/api/health`
 
-1. Clone the repository and install dependencies:
-   ```bash
-   npm install
-   ```
-
-2. Run both Backend Express server (Port 5001) and React Vite dashboard (Port 5173) concurrently:
-   ```bash
-   npm run dev
-   ```
-
-3. Open your browser and navigate to:
-   - **Dashboard**: `http://localhost:5173`
-   - **Backend API Status**: `http://localhost:5001/api/status`
-
----
-
-## Environment Variables (`.env`)
-
-Copy `.env.example` to `.env` to customize settings:
-
-```ini
-# Server Port
-PORT=5001
-NODE_ENV=development
-
-# Token-Bucket Rate Limiter (Requests per source per minute)
-RATE_LIMIT_PER_MIN=10
-
-# Retry & Exponential Backoff
-MAX_RETRIES=3
-INITIAL_RETRY_DELAY_MS=1000
-MAX_RETRY_DELAY_MS=10000
-
-# Circuit Breaker Thresholds
-CB_FAILURE_THRESHOLD=5
-CB_COOLDOWN_MS=30000
-
-# Worker Pool Concurrency
-WORKER_CONCURRENCY=2
-
-# Cron Schedule (Default: Every 5 minutes)
-FETCH_CRON_SCHEDULE=*/5 * * * *
-
-# Public Feed Data Sources
-PRIMARY_SOURCE_URL=https://remoteok.com/api
-SECONDARY_SOURCE_URL=https://weworkremotely.com/remote-jobs.rss
-
-# Database Path
-DB_PATH=./pipeline.db
+### 3. Run Automated Tests
+```bash
+npm test
 ```
 
 ---
 
-## Render Deployment Readiness
+## 🧪 Testing Failure Simulation Live
 
-To deploy to [Render](https://render.com):
-
-1. Set **Build Command**:
-   ```bash
-   npm install && npm --prefix client run build
-   ```
-2. Set **Start Command**:
-   ```bash
-   npm start
-   ```
-3. Add Environment Variables from `.env.example` in the Render dashboard.
+You can test the multi-tier fallback chain live in the dashboard:
+1. Click **"Simulate Primary Failure"** in the Circuit Breaker panel.
+2. Observe the Primary Circuit Breaker transition to `OPEN`.
+3. Watch the pipeline automatically fall back to the Secondary RSS Feed (`WeWorkRemotely`) or SQLite Cache (`isStale: true`).
+4. Click **"Reset Breakers"** to restore normal operation.
 
 ---
 
-## Project Directory Layout
+## 📋 Assignment Compliance Matrix
 
-```
-.
-├── .env
-├── .env.example
-├── README.md
-├── package.json
-├── client/
-│   ├── index.html
-│   ├── vite.config.js
-│   └── src/
-│       ├── App.jsx
-│       ├── main.jsx
-│       ├── index.css
-│       └── components/
-│           ├── Header.jsx
-│           ├── MetricsOverview.jsx
-│           ├── CircuitBreakerCard.jsx
-│           ├── ListingsExplorer.jsx
-│           └── LogViewerModal.jsx
-└── src/
-    ├── config/
-    │   └── env.js
-    ├── logger/
-    │   └── logger.js
-    ├── storage/
-    │   └── db.js
-    ├── rateLimiter/
-    │   └── tokenBucket.js
-    ├── circuitBreaker/
-    │   └── circuitBreaker.js
-    ├── fetcher/
-    │   ├── retry.js
-    │   ├── sources/
-    │   │   ├── remoteok.js
-    │   │   └── weworkremotely.js
-    │   └── fetcherService.js
-    ├── queue/
-    │   └── jobQueue.js
-    ├── api/
-    │   └── routes.js
-    └── server.js
-```
+| Requirement | Implementation Component | Verified |
+| :--- | :--- | :---: |
+| **Detection Surface** | Documented analysis in README.md & DECISIONS.md | ✅ |
+| **Ingestion Strategy** | `src/fetcher/sources/remoteok.js` & `weworkremotely.js` | ✅ |
+| **Rate Limiting** | `src/rateLimiter/tokenBucket.js` (`RATE_LIMIT_PER_MIN=10`) | ✅ |
+| **Retry & Backoff** | `src/fetcher/retry.js` (Exponential backoff + jitter) | ✅ |
+| **Circuit Breaker** | `src/circuitBreaker/circuitBreaker.js` (3-State Machine) | ✅ |
+| **Multi-Tier Fallback** | `src/fetcher/fetcherService.js` (Primary ➔ Secondary ➔ Cache) | ✅ |
+| **Deduplication** | `src/storage/db.js` (`INSERT ON CONFLICT(id) DO UPDATE`) | ✅ |
+| **Health Endpoint** | `GET /api/health` in `src/api/routes.js` | ✅ |
+| **Failure Simulation** | `POST /api/simulate/failure` & UI toggle buttons | ✅ |
+| **Automated Tests** | `tests/pipeline.test.js` (`npm test`) | ✅ |
+| **1-Page DECISIONS.md** | `DECISIONS.md` in repository root | ✅ |
+| **Clean Repo & .gitignore** | Database, `.env`, `node_modules` untracked | ✅ |

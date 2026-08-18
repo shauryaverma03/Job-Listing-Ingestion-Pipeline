@@ -19,7 +19,7 @@ export default function App() {
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  // Theme Management with Smooth Color Dissolve
+  // Theme Management
   const [currentTheme, setCurrentTheme] = useState(() => {
     return localStorage.getItem('app_theme') || 'default';
   });
@@ -142,9 +142,14 @@ export default function App() {
         workerPool={statusData?.workerPool}
       />
 
-      {/* 3-State Circuit Breaker Status Cards */}
+      {/* 3-State Circuit Breaker Status Cards & Failure Simulation */}
       <CircuitBreakerCard
         circuitBreakers={statusData?.circuitBreakers}
+        simulatedFailures={statusData?.simulatedFailures}
+        onRefresh={() => {
+          fetchStatus();
+          fetchListingsData();
+        }}
       />
 
       {/* Deduplicated Job Listings Explorer Grid */}
