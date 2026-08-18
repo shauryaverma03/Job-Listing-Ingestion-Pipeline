@@ -40,22 +40,22 @@ export function CircuitBreakerCard({ circuitBreakers, simulatedFailures, onRefre
   };
 
   return (
-    <div id="circuit-breaker-section" className="glass-panel" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
+    <div id="circuit-breaker-section" className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1.75rem', background: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
       
-      {/* Card Header with Demo Failure Simulation Controls */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '0.75rem' }}>
+      {/* Panel Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '0.85rem' }}>
         <div>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ShieldAlert size={18} color="var(--accent-indigo)" />
-            Circuit Breaker Resilience State
+            3-State Circuit Breaker Control Panel
           </h3>
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            Monitors consecutive failures per source. Trips open after 5 errors to prevent cascading failures.
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            Protects downstream services by short-circuiting calls after 5 consecutive failures (30s cooldown).
           </p>
         </div>
 
-        {/* Demo Resilience Simulation Toolbar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+        {/* Failure Simulation Demo Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
           <button
             onClick={handleSimulatePrimaryFailure}
             disabled={isSimulating}
@@ -63,14 +63,15 @@ export function CircuitBreakerCard({ circuitBreakers, simulatedFailures, onRefre
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '5px 12px',
+              padding: '6px 14px',
               borderRadius: '6px',
-              background: 'rgba(244, 63, 94, 0.15)',
-              border: '1px solid rgba(244, 63, 94, 0.35)',
+              background: 'rgba(244, 63, 94, 0.12)',
+              border: '1px solid rgba(244, 63, 94, 0.3)',
               color: '#fb7185',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              cursor: isSimulating ? 'not-allowed' : 'pointer'
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: isSimulating ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s'
             }}
           >
             <Flame size={14} />
@@ -84,14 +85,15 @@ export function CircuitBreakerCard({ circuitBreakers, simulatedFailures, onRefre
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '5px 12px',
+              padding: '6px 14px',
               borderRadius: '6px',
-              background: 'rgba(30, 41, 59, 0.7)',
-              border: '1px solid var(--border-glass)',
+              background: 'rgba(30, 41, 59, 0.8)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
               color: 'var(--text-muted)',
-              fontSize: '0.75rem',
+              fontSize: '0.78rem',
               fontWeight: 600,
-              cursor: isSimulating ? 'not-allowed' : 'pointer'
+              cursor: isSimulating ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s'
             }}
           >
             <RotateCcw size={14} />
@@ -100,20 +102,22 @@ export function CircuitBreakerCard({ circuitBreakers, simulatedFailures, onRefre
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
         
         {/* Primary Source Breaker */}
         <div style={{
-          background: 'rgba(15, 23, 42, 0.6)',
-          border: primaryBreaker.state === 'OPEN' ? '1px solid rgba(244, 63, 94, 0.5)' : '1px solid var(--border-glass)',
+          background: 'rgba(15, 23, 42, 0.9)',
+          border: primaryBreaker.state === 'OPEN' ? '1px solid rgba(244, 63, 94, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
           borderRadius: '10px',
-          padding: '1rem'
+          padding: '1.1rem'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
             <div>
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-blue)', letterSpacing: '0.05em' }}>PRIMARY SOURCE</span>
-              <h4 style={{ fontSize: '1rem', fontWeight: 600, color: '#ffffff' }}>
-                RemoteOK API {simulatedFailures?.RemoteOK && <span style={{ fontSize: '0.7rem', color: '#fb7185' }}>(Simulated Error)</span>}
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--accent-cyan)', letterSpacing: '0.05em', fontFamily: 'var(--font-mono)' }}>
+                PRIMARY FEED SOURCE
+              </span>
+              <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff' }}>
+                RemoteOK JSON API {simulatedFailures?.RemoteOK && <span style={{ fontSize: '0.72rem', color: '#fb7185' }}>(Simulated Error)</span>}
               </h4>
             </div>
             <div className={`status-pill ${primaryBreaker.state}`}>
@@ -122,19 +126,19 @@ export function CircuitBreakerCard({ circuitBreakers, simulatedFailures, onRefre
             </div>
           </div>
 
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'grid', gap: '6px' }}>
+          <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'grid', gap: '8px', fontFamily: 'var(--font-mono)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Consecutive Failures:</span>
+              <span>Consecutive Errors:</span>
               <strong style={{ color: primaryBreaker.consecutiveFailures > 0 ? '#fbbf24' : '#ffffff' }}>
                 {primaryBreaker.consecutiveFailures} / {primaryBreaker.failureThreshold}
               </strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Total Requests Made:</span>
-              <strong>{primaryBreaker.totalRequests || 0}</strong>
+              <span>Total Ingestion Calls:</span>
+              <strong style={{ color: '#ffffff' }}>{primaryBreaker.totalRequests || 0}</strong>
             </div>
             {primaryBreaker.cooldownRemainingMs > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#f87171', fontWeight: 600 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#f87171', fontWeight: 700 }}>
                 <span>Cooldown Remaining:</span>
                 <span>{Math.ceil(primaryBreaker.cooldownRemainingMs / 1000)}s</span>
               </div>
@@ -144,15 +148,17 @@ export function CircuitBreakerCard({ circuitBreakers, simulatedFailures, onRefre
 
         {/* Secondary Fallback Source Breaker */}
         <div style={{
-          background: 'rgba(15, 23, 42, 0.6)',
-          border: secondaryBreaker.state === 'OPEN' ? '1px solid rgba(244, 63, 94, 0.5)' : '1px solid var(--border-glass)',
+          background: 'rgba(15, 23, 42, 0.9)',
+          border: secondaryBreaker.state === 'OPEN' ? '1px solid rgba(244, 63, 94, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
           borderRadius: '10px',
-          padding: '1rem'
+          padding: '1.1rem'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
             <div>
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-purple)', letterSpacing: '0.05em' }}>SECONDARY FALLBACK</span>
-              <h4 style={{ fontSize: '1rem', fontWeight: 600, color: '#ffffff' }}>WeWorkRemotely RSS</h4>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--accent-purple)', letterSpacing: '0.05em', fontFamily: 'var(--font-mono)' }}>
+                SECONDARY FALLBACK FEED
+              </span>
+              <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff' }}>WeWorkRemotely RSS</h4>
             </div>
             <div className={`status-pill ${secondaryBreaker.state}`}>
               <span className="pulse-dot"></span>
@@ -160,19 +166,19 @@ export function CircuitBreakerCard({ circuitBreakers, simulatedFailures, onRefre
             </div>
           </div>
 
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'grid', gap: '6px' }}>
+          <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'grid', gap: '8px', fontFamily: 'var(--font-mono)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Consecutive Failures:</span>
+              <span>Consecutive Errors:</span>
               <strong style={{ color: secondaryBreaker.consecutiveFailures > 0 ? '#fbbf24' : '#ffffff' }}>
                 {secondaryBreaker.consecutiveFailures} / {secondaryBreaker.failureThreshold}
               </strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Total Requests Made:</span>
-              <strong>{secondaryBreaker.totalRequests || 0}</strong>
+              <span>Total Ingestion Calls:</span>
+              <strong style={{ color: '#ffffff' }}>{secondaryBreaker.totalRequests || 0}</strong>
             </div>
             {secondaryBreaker.cooldownRemainingMs > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#f87171', fontWeight: 600 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#f87171', fontWeight: 700 }}>
                 <span>Cooldown Remaining:</span>
                 <span>{Math.ceil(secondaryBreaker.cooldownRemainingMs / 1000)}s</span>
               </div>
@@ -182,13 +188,13 @@ export function CircuitBreakerCard({ circuitBreakers, simulatedFailures, onRefre
 
       </div>
 
-      {/* Fallback Plan B status banner if primary is open or simulating failure */}
+      {/* Active Fallback Notice Banner */}
       {(primaryBreaker.state === 'OPEN' || simulatedFailures?.RemoteOK) && (
         <div style={{
           marginTop: '1rem',
           padding: '0.75rem 1rem',
           borderRadius: '8px',
-          background: 'rgba(245, 158, 11, 0.12)',
+          background: 'rgba(245, 158, 11, 0.1)',
           border: '1px solid rgba(245, 158, 11, 0.3)',
           color: '#fbbf24',
           fontSize: '0.82rem',
@@ -197,7 +203,7 @@ export function CircuitBreakerCard({ circuitBreakers, simulatedFailures, onRefre
           gap: '8px'
         }}>
           <Zap size={16} />
-          <strong>Fallback Active:</strong> Primary feed circuit breaker is OPEN or failing. Pipeline is automatically routing requests to Secondary RSS Feed or SQLite DB Cache.
+          <strong>Plan B Fallback Activated:</strong> Primary feed circuit breaker is OPEN or simulated. Ingestion pipeline is automatically routing tasks to Secondary RSS Feed (`WeWorkRemotely`) or SQLite Cache.
         </div>
       )}
     </div>
