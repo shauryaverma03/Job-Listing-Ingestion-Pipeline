@@ -189,7 +189,7 @@ export function getLatestListings(limit = 100) {
   const rows = stmt.all(limit);
   return rows.map(r => ({
     ...r,
-    isStale: true,
+    isStale: Boolean(r.isStale), // Returns stored DB freshness state without mutating stored rows
     tags: r.tags ? (r.tags.startsWith('[') ? JSON.parse(r.tags) : r.tags.split(',')) : []
   }));
 }

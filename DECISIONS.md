@@ -7,7 +7,7 @@ We selected structured public interfaces (RemoteOK JSON API & WeWorkRemotely RSS
 
 ### Why this over the obvious alternative (Headless Browser Scraping)?
 - **Detection Surface & Operational Stability**: Headless browsers incur heavy memory overhead, fragile CSS selector dependencies, and elevated detection surface vectors (WebRTC leakage, canvas fingerprinting, CDP detection). Public APIs/RSS provide low-risk, structured data contracts that do not trigger anti-bot challenges or violate platform ToS.
-- **Resource Efficiency & Pacing**: HTTP-level API ingestion enables microsecond response times and deterministic token-bucket pacing (10 req/min) without rendering client-side JavaScript or executing unneeded network assets.
+- **Resource Efficiency & Pacing**: HTTP-level API ingestion enables fast response times and deterministic token-bucket pacing (10 req/min) without rendering client-side JavaScript or executing unneeded network assets.
 
 ---
 
@@ -19,7 +19,7 @@ We selected structured public interfaces (RemoteOK JSON API & WeWorkRemotely RSS
 ### What I Would Implement With a Real Week
 1. **Distributed Queue (Redis & BullMQ)**: Replace the in-memory queue with Redis BullMQ to enable distributed task locking, dead-letter queues, and horizontal worker scaling across independent cloud nodes.
 2. **PostgreSQL & Schema Migration Engine**: Replace SQLite with PostgreSQL managed on Cloud SQL / Supabase with Knex/Prisma migration tracking for zero-downtime schema updates.
-3. **Adaptive Proxy Rotation**: Integrate residential HTTP proxy rotation with automated health checks to prevent single-IP throttling across multi-region feeds.
+3. **Centralized Observability & Telemetry**: Replace local structured logging with OpenTelemetry tracing and Prometheus metrics, enabling real-time alerting on circuit breaker trips and rate limiter exhaustion.
 
 ---
 

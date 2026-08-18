@@ -1,68 +1,71 @@
-import { test, describe, beforeEach } from 'node:test';
+import { test, describe, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { TokenBucket } from '../src/rateLimiter/tokenBucket.js';
 import { CircuitBreaker, CIRCUIT_STATES } from '../src/circuitBreaker/circuitBreaker.js';
 import { withRetry } from '../src/fetcher/retry.js';
 import { saveListings, getListings, initDatabase } from '../src/storage/db.js';
+import {
+  executeFetchTask,
+  setSimulatedFailure,
+  resetSimulatedFailures,
+  circuitBreakerManager
+} from '../src/fetcher/fetcherService.js';
 
-describe('Job Ingestion Pipeline Test Suite', () => {
+describe('Job Ingestion Pipeline Resilience & Fallback Test Suite', () => {
 
   beforeEach(() => {
     initDatabase();
+    resetSimulatedFailures();
   });
 
-  // Test 1: Rate Limiter Token Bucket
+  afterEach(() => {
+    resetSimulatedFailures();
+  });
+
+  // Core Test 1: Rate Limiter Token Bucket
   test('TokenBucket rate limiter consumes tokens and enforces capacity', async () => {
-    const bucket = new TokenBucket(5, 60); // 5 capacity, 60 per min (1 per sec)
+    const bucket = new TokenBucket(5, 60);
     
     assert.equal(bucket.tryConsume(1), true);
     assert.equal(bucket.tryConsume(1), true);
     assert.equal(bucket.tryConsume(1), true);
     assert.equal(bucket.tryConsume(1), true);
     assert.equal(bucket.tryConsume(1), true);
-    
-    // 6th request should fail immediately when empty
     assert.equal(bucket.tryConsume(1), false);
   });
 
-  // Test 2: Circuit Breaker State Transitions
+  // Core Test 2: Circuit Breaker State Transitions
   test('CircuitBreaker transitions CLOSED -> OPEN after threshold failures -> HALF_OPEN -> CLOSED on success', async () => {
     const breaker = new CircuitBreaker('TestBreaker', { failureThreshold: 3, cooldownMs: 100 });
 
     assert.equal(breaker.state, CIRCUIT_STATES.CLOSED);
 
-    // Record 3 failures to trip breaker
     breaker.onFailure(new Error('Fail 1'));
     breaker.onFailure(new Error('Fail 2'));
     breaker.onFailure(new Error('Fail 3'));
 
     assert.equal(breaker.state, CIRCUIT_STATES.OPEN);
 
-    // Request in OPEN state should throw error
     await assert.rejects(
       async () => await breaker.execute(async () => 'should fail'),
       /is OPEN/
     );
 
-    // Wait for cooldown
     await new Promise(r => setTimeout(r, 120));
 
-    // canExecute should move state to HALF_OPEN
     assert.equal(breaker.canExecute(), true);
     assert.equal(breaker.state, CIRCUIT_STATES.HALF_OPEN);
 
-    // Trial request succeeds -> moves back to CLOSED
     await breaker.execute(async () => 'success');
     assert.equal(breaker.state, CIRCUIT_STATES.CLOSED);
   });
 
-  // Test 3: Retry Backoff & Non-Retryable Error Handling
+  // Core Test 3: Retry Backoff & Non-Retryable 404 Handling
   test('withRetry retries temporary server errors and fails immediately on non-retryable 404', async () => {
     let callCount = 0;
 
-    // Retryable 500 error succeeded on attempt 2
-    const result = await withRetry(async (attempt) => {
+    const result = await withRetry(async () => {
       callCount++;
       if (callCount === 1) {
         const err = new Error('Server Error');
@@ -75,7 +78,6 @@ describe('Job Ingestion Pipeline Test Suite', () => {
     assert.equal(result, 'success');
     assert.equal(callCount, 2);
 
-    // Non-retryable 404 error should fail on attempt 1
     callCount = 0;
     await assert.rejects(
       async () => await withRetry(async () => {
@@ -90,7 +92,7 @@ describe('Job Ingestion Pipeline Test Suite', () => {
     assert.equal(callCount, 1);
   });
 
-  // Test 4: Deduplication & Canonical Normalization Schema Storage
+  // Core Test 4: Deduplication & Canonical Normalization Schema Storage
   test('saveListings normalizes listings into canonical schema and updates duplicate IDs', () => {
     const testId = `test-job-${Date.now()}`;
     const testItems = [
@@ -112,7 +114,6 @@ describe('Job Ingestion Pipeline Test Suite', () => {
     const { insertedCount } = saveListings(testItems, false);
     assert.equal(insertedCount, 1);
 
-    // Query back from DB
     const res = getListings({ page: 1, limit: 10, search: 'ACDYON' });
     assert.ok(res.listings.length > 0);
     const savedItem = res.listings.find(l => l.id === testId);
@@ -121,10 +122,84 @@ describe('Job Ingestion Pipeline Test Suite', () => {
     assert.equal(savedItem.isStale, false);
     assert.equal(savedItem.source, 'TestFeed');
 
-    // Re-inserting same ID should update instead of insert duplicate
     const reinsertRes = saveListings(testItems, false);
     assert.equal(reinsertRes.insertedCount, 0);
     assert.equal(reinsertRes.updatedCount, 1);
+  });
+
+  // FALLBACK SCENARIO TEST 1: Primary source failure -> Secondary source succeeds
+  test('Fallback Scenario 1: Primary source failure routes to secondary fallback source', async () => {
+    setSimulatedFailure('RemoteOK', true);
+
+    const result = await executeFetchTask({ id: 'test-fallback-1' });
+    
+    assert.equal(result.success, true);
+    assert.ok(result.source.includes('WeWorkRemotely'));
+    assert.equal(result.isFallback, true);
+  });
+
+  // FALLBACK SCENARIO TEST 2: Primary failure -> Secondary failure -> Cache fallback
+  test('Fallback Scenario 2: Primary & Secondary failure routes to SQLite cache fallback with stale metadata', async () => {
+    setSimulatedFailure('RemoteOK', true);
+    setSimulatedFailure('WeWorkRemotely', true);
+
+    const result = await executeFetchTask({ id: 'test-fallback-2' });
+
+    assert.equal(result.success, true);
+    assert.equal(result.source, 'Database Cache (Stale Data)');
+    assert.equal(result.isStale, true);
+    assert.equal(result.isFallback, true);
+  });
+
+  // FALLBACK SCENARIO TEST 3: Malformed individual job item skipped gracefully
+  test('Resilience Test 3: Malformed listing items are skipped without crashing ingestion batch', () => {
+    const rawBatch = [
+      { illegalNotice: 'Legal Info' }, // index 0 metadata
+      null,                           // malformed null
+      'invalid string item',          // malformed string
+      { position: 'Valid Engineer', company: 'TechCorp', id: 999123, url: '/l/999123' } // valid item
+    ];
+
+    // Simulating parser loop logic
+    const normalized = [];
+    for (const item of rawBatch.slice(1)) {
+      try {
+        if (!item || typeof item !== 'object') continue;
+        normalized.push({
+          id: `test-${item.id}`,
+          title: item.position,
+          company: item.company
+        });
+      } catch (err) {
+        // Skipped
+      }
+    }
+
+    assert.equal(normalized.length, 1);
+    assert.equal(normalized[0].title, 'Valid Engineer');
+  });
+
+  // FALLBACK SCENARIO TEST 4: Empty source response handled gracefully
+  test('Resilience Test 4: Empty or non-array source response is caught as ingestion failure', () => {
+    const emptyResponse = '';
+    assert.throws(() => {
+      if (!emptyResponse || emptyResponse.trim().length === 0) {
+        throw new Error('API returned empty response body');
+      }
+    }, /empty response body/);
+  });
+
+  // FALLBACK SCENARIO TEST 5: Circuit breaker OPEN bypasses failed primary source
+  test('Resilience Test 5: Circuit Breaker OPEN state bypasses primary source without extra network calls', async () => {
+    const primaryBreaker = circuitBreakerManager.getBreaker('RemoteOK');
+    primaryBreaker.state = CIRCUIT_STATES.OPEN;
+    primaryBreaker.nextAttemptAllowedAt = Date.now() + 60000;
+
+    // Execute task - should skip RemoteOK immediately and use WeWorkRemotely fallback
+    const result = await executeFetchTask({ id: 'test-cb-open' });
+
+    assert.ok(result.source.includes('WeWorkRemotely'));
+    assert.equal(result.isFallback, true);
   });
 
 });

@@ -124,11 +124,11 @@ npm test
 
 ## 🧪 Testing Failure Simulation Live
 
-You can test the multi-tier fallback chain live in the dashboard:
-1. Click **"Simulate Primary Failure"** in the Circuit Breaker panel.
-2. Observe the Primary Circuit Breaker transition to `OPEN`.
-3. Watch the pipeline automatically fall back to the Secondary RSS Feed (`WeWorkRemotely`) or SQLite Cache (`isStale: true`).
-4. Click **"Reset Breakers"** to restore normal operation.
+You can test the multi-tier fallback chain live in the dashboard or via API:
+1. Click **"Simulate Primary Failure"** in the Circuit Breaker panel. This triggers a controlled primary-source failure.
+2. Repeated failures cause the circuit breaker to transition to `OPEN` (after reaching `CB_FAILURE_THRESHOLD=5`), after which the pipeline automatically routes requests to the secondary source (`WeWorkRemotely RSS`).
+3. If both sources fail, the system serves last-known-good cached data from SQLite marked with `isStale: true` metadata.
+4. Click **"Reset Breakers"** to restore all circuit breakers to `CLOSED` state.
 
 ---
 
