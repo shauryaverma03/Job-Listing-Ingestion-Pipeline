@@ -1,0 +1,25 @@
+{
+  "name": "job-ingestion-pipeline",
+  "version": "1.0.0",
+  "description": "Resilient, rate-limited job-listing ingestion pipeline and monitoring dashboard",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "server": "node src/server.js",
+    "client": "npm --prefix client run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "postinstall": "cd client && npm install"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "node-cron": "^3.0.3",
+    "rss-parser": "^3.13.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
