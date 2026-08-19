@@ -16,25 +16,9 @@ Resilient job listing ingestion pipeline and monitoring dashboard built for Part
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    Cron[Cron / Manual Trigger] --> Queue[In-Memory Queue]
-    Queue --> Worker[Stateless Worker Pool]
-    Worker --> RL[Token-Bucket Limiter]
-    RL --> CB1{Circuit Breaker: RemoteOK}
-    CB1 -- CLOSED --> RemoteOK[RemoteOK API]
-    CB1 -- OPEN / Fail --> CB2{Circuit Breaker: WWR}
-    CB2 -- CLOSED --> WWR[WeWorkRemotely RSS]
-    CB2 -- OPEN / Fail --> Cache[SQLite Cache]
-    RemoteOK --> Parser[Normalizer]
-    WWR --> Parser
-    Cache --> Parser
-    Parser --> DB[(SQLite Database)]
-    DB --> API[Express REST API]
-    API --> Dashboard[React Dashboard]
-```
+![Architecture Diagram](./docs/architecture-diagram.png)
 
-![Architecture Flow](./docs/architecture.svg)
+Requests enter through Render's edge, get scheduled and queued, pass through a token-bucket rate limiter and 3-state circuit breaker, then attempt the primary source (RemoteOK) with automatic failover to a secondary source (WeWorkRemotely RSS) and finally a stale SQLite cache if both fail. Dashed lines indicate failure paths.
 
 ## Core Features
 
