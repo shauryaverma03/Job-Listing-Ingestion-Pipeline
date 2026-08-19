@@ -6,7 +6,13 @@ Resilient job listing ingestion pipeline and monitoring dashboard built for Part
 
 ## Live Demo
 
-Live app: [https://job-listing-ingestion-pipeline.onrender.com](https://job-listing-ingestion-pipeline.onrender.com) · Health: [https://job-listing-ingestion-pipeline.onrender.com/api/health](https://job-listing-ingestion-pipeline.onrender.com/api/health) · Status: [https://job-listing-ingestion-pipeline.onrender.com/api/status](https://job-listing-ingestion-pipeline.onrender.com/api/status) · Listings: [https://job-listing-ingestion-pipeline.onrender.com/api/listings](https://job-listing-ingestion-pipeline.onrender.com/api/listings) · Decisions: [DECISIONS.md](DECISIONS.md)
+| | |
+|---|---|
+| **App** | [job-listing-ingestion-pipeline.onrender.com](https://job-listing-ingestion-pipeline.onrender.com) |
+| **Health** | [/api/health](https://job-listing-ingestion-pipeline.onrender.com/api/health) |
+| **Status** | [/api/status](https://job-listing-ingestion-pipeline.onrender.com/api/status) |
+| **Listings** | [/api/listings](https://job-listing-ingestion-pipeline.onrender.com/api/listings) |
+| **Decisions** | [DECISIONS.md](DECISIONS.md) |
 
 ## Architecture
 
