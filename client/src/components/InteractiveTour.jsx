@@ -5,8 +5,8 @@ const TOUR_STEPS = [
   {
     targetId: 'hero-header-section',
     icon: Sparkles,
-    color: '#8b5cf6',
-    title: 'Welcome to Job Ingestion Pipeline',
+    color: '#06b6d4',
+    title: 'Welcome to Job Pulse Ingestion Engine',
     subtitle: 'Resilient Scraper Architecture',
     description: 'This pipeline automatically ingests job listings on a schedule or on-demand without authentication walls. Let us explore each resilience component in action!',
     badge: 'Step 1 of 7'
@@ -23,7 +23,7 @@ const TOUR_STEPS = [
   {
     targetId: 'circuit-breaker-section',
     icon: ShieldAlert,
-    color: '#ef4444',
+    color: '#f43f5e',
     title: '3-State Circuit Breaker',
     subtitle: 'CLOSED ➔ OPEN ➔ HALF-OPEN State Machine',
     description: 'Trips to OPEN after 5 consecutive errors to prevent cascading failures. After a 30-second cooldown, it transitions to HALF-OPEN to test system recovery.',
@@ -141,7 +141,7 @@ export function InteractiveTour({ isOpen, onClose }) {
 
   return (
     <>
-      {/* SVG Cutout Mask Overlay - Target Element Shines Through 100% Bright */}
+      {/* SVG Cutout Mask Overlay */}
       <svg
         style={{
           position: 'fixed',
@@ -156,10 +156,7 @@ export function InteractiveTour({ isOpen, onClose }) {
       >
         <defs>
           <mask id="tour-spotlight-mask">
-            {/* White background fills mask (darkens screen) */}
             <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            
-            {/* Black cutout rectangle over target element */}
             {targetRect && (
               <rect
                 x={targetRect.viewportLeft}
@@ -174,7 +171,6 @@ export function InteractiveTour({ isOpen, onClose }) {
           </mask>
         </defs>
 
-        {/* Dark overlay with literal cutout hole */}
         <rect
           x="0"
           y="0"
@@ -185,7 +181,7 @@ export function InteractiveTour({ isOpen, onClose }) {
         />
       </svg>
 
-      {/* Dynamic Glowing Spotlight Frame Box over target element */}
+      {/* Dynamic Glowing Spotlight Frame Box */}
       {targetRect && (
         <div
           style={{
@@ -204,7 +200,7 @@ export function InteractiveTour({ isOpen, onClose }) {
         />
       )}
 
-      {/* Tour Step Tooltip Modal Card */}
+      {/* Tour Step Tooltip Card */}
       <div
         className="tour-card"
         style={{
@@ -215,14 +211,14 @@ export function InteractiveTour({ isOpen, onClose }) {
           zIndex: 9010,
           width: '90%',
           maxWidth: '480px',
-          background: '#0f172a',
+          background: '#090d16',
           border: `1.5px solid ${step.color}`,
           boxShadow: `0 25px 60px rgba(0, 0, 0, 0.85), 0 0 30px ${step.color}33`,
           borderRadius: '16px',
           padding: '1.5rem'
         }}
       >
-        {/* Step Badge & Close Button */}
+        {/* Step Badge & Close */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <span style={{
             fontSize: '0.72rem',

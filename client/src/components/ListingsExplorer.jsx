@@ -12,17 +12,17 @@ export function ListingsExplorer({
   isLoading
 }) {
   return (
-    <div id="listings-explorer-section" className="glass-panel" style={{ padding: '1.5rem', background: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+    <div id="listings-explorer-section" className="glass-panel" style={{ padding: '1.5rem', background: '#0c1222', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
       
-      {/* Panel Header & Filters */}
+      {/* Panel Header & Filter Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '0.85rem' }}>
         <div>
           <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Briefcase size={20} color="var(--accent-indigo)" />
+            <Briefcase size={20} color="var(--accent-primary)" />
             Deduplicated Job Feed Explorer
           </h2>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            Showing {pagination?.total || 0} normalized job records stored in SQLite database
+          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+            Showing {pagination?.total || 0} normalized job postings stored in SQLite database
           </p>
         </div>
 
@@ -30,7 +30,7 @@ export function ListingsExplorer({
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           
           {/* Source Tabs */}
-          <div style={{ display: 'flex', background: 'rgba(30, 41, 59, 0.9)', padding: '3px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <div style={{ display: 'flex', background: '#090d16', padding: '3px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
             {['', 'RemoteOK', 'WeWorkRemotely'].map((src) => (
               <button
                 key={src || 'all'}
@@ -42,9 +42,9 @@ export function ListingsExplorer({
                   fontSize: '0.78rem',
                   fontWeight: 600,
                   cursor: 'pointer',
-                  background: sourceFilter === src ? 'var(--accent-indigo)' : 'transparent',
-                  color: sourceFilter === src ? '#ffffff' : 'var(--text-muted)',
-                  transition: 'all 0.2s'
+                  background: sourceFilter === src ? 'var(--accent-primary)' : 'transparent',
+                  color: sourceFilter === src ? '#090d16' : 'var(--text-muted)',
+                  transition: 'all 0.2s ease'
                 }}
               >
                 {src || 'All Sources'}
@@ -57,14 +57,14 @@ export function ListingsExplorer({
             <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
             <input
               type="text"
-              placeholder="Search by title, company, tag..."
+              placeholder="Search title, company, tag..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{
                 width: '100%',
                 padding: '0.55rem 0.75rem 0.55rem 2.4rem',
                 borderRadius: '8px',
-                background: 'rgba(30, 41, 59, 0.9)',
+                background: '#090d16',
                 border: '1px solid rgba(255, 255, 255, 0.12)',
                 color: '#ffffff',
                 fontSize: '0.85rem',
@@ -79,7 +79,7 @@ export function ListingsExplorer({
       {/* Listings Grid */}
       {isLoading ? (
         <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-          Loading ingested listings from database...
+          Loading ingested job postings from database...
         </div>
       ) : listings.length === 0 ? (
         <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -91,18 +91,18 @@ export function ListingsExplorer({
             <div
               key={job.id}
               style={{
-                background: 'rgba(15, 23, 42, 0.9)',
+                background: '#090d16',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
                 borderRadius: '10px',
                 padding: '1.15rem',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                transition: 'all 0.2s',
+                transition: 'all 0.2s ease',
                 position: 'relative'
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.4)';
+                e.currentTarget.style.borderColor = 'var(--accent-primary)';
                 e.currentTarget.style.transform = 'translateY(-2px)';
               }}
               onMouseOut={(e) => {
@@ -111,16 +111,15 @@ export function ListingsExplorer({
               }}
             >
               <div>
-                {/* Source & Stale indicator */}
+                {/* Source & Stale badge */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
                   <span style={{
-                    fontSize: '0.7rem',
+                    fontSize: '0.72rem',
                     fontWeight: 700,
-                    textTransform: 'uppercase',
                     fontFamily: 'var(--font-mono)',
                     color: job.source === 'RemoteOK' ? 'var(--accent-cyan)' : 'var(--accent-purple)',
-                    background: job.source === 'RemoteOK' ? 'rgba(6, 182, 212, 0.15)' : 'rgba(168, 85, 247, 0.15)',
-                    padding: '2px 8px',
+                    background: job.source === 'RemoteOK' ? 'rgba(6, 182, 212, 0.12)' : 'rgba(168, 85, 247, 0.12)',
+                    padding: '3px 9px',
                     borderRadius: '4px'
                   }}>
                     {job.source}
@@ -128,12 +127,12 @@ export function ListingsExplorer({
 
                   {job.isStale && (
                     <span style={{
-                      fontSize: '0.7rem',
+                      fontSize: '0.72rem',
                       fontWeight: 600,
                       color: '#fbbf24',
-                      background: 'rgba(245, 158, 11, 0.15)',
+                      background: 'rgba(245, 158, 11, 0.12)',
                       border: '1px solid rgba(245, 158, 11, 0.3)',
-                      padding: '2px 8px',
+                      padding: '3px 9px',
                       borderRadius: '4px',
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -169,8 +168,9 @@ export function ListingsExplorer({
                     {job.tags.slice(0, 4).map((tag, idx) => (
                       <span key={idx} style={{
                         fontSize: '0.72rem',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        fontFamily: 'var(--font-mono)',
+                        background: 'rgba(255, 255, 255, 0.04)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
                         padding: '2px 8px',
                         borderRadius: '4px',
                         color: 'var(--text-muted)'
@@ -184,7 +184,7 @@ export function ListingsExplorer({
 
               {/* Card Footer */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.85rem', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--font-mono)' }}>
                   <Calendar size={13} /> {new Date(job.fetchedAt).toLocaleDateString()}
                 </span>
 
@@ -194,7 +194,7 @@ export function ListingsExplorer({
                   rel="noopener noreferrer"
                   style={{
                     fontSize: '0.82rem',
-                    color: 'var(--accent-indigo)',
+                    color: 'var(--accent-primary)',
                     textDecoration: 'none',
                     fontWeight: 700,
                     display: 'inline-flex',
@@ -225,7 +225,7 @@ export function ListingsExplorer({
               style={{
                 padding: '6px 14px',
                 borderRadius: '6px',
-                background: 'rgba(30, 41, 59, 0.9)',
+                background: '#090d16',
                 border: '1px solid rgba(255, 255, 255, 0.12)',
                 color: '#ffffff',
                 cursor: pagination.page <= 1 ? 'not-allowed' : 'pointer',
@@ -246,7 +246,7 @@ export function ListingsExplorer({
               style={{
                 padding: '6px 14px',
                 borderRadius: '6px',
-                background: 'rgba(30, 41, 59, 0.9)',
+                background: '#090d16',
                 border: '1px solid rgba(255, 255, 255, 0.12)',
                 color: '#ffffff',
                 cursor: pagination.page >= pagination.totalPages ? 'not-allowed' : 'pointer',

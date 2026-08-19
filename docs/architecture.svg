@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" width="100%" height="100%">
+  <rect width="900" height="420" fill="#090d16" rx="12" />
+  
+  <style>
+    .title { font-family: system-ui, sans-serif; font-weight: 700; font-size: 14px; fill: #f8fafc; }
+    .sub { font-family: monospace; font-size: 11px; fill: #94a3b8; }
+    .box { fill: #0f172a; stroke: #1e293b; stroke-width: 1.5; rx: 8; }
+    .box-primary { fill: #0f172a; stroke: #06b6d4; stroke-width: 2; rx: 8; }
+    .box-secondary { fill: #0f172a; stroke: #a855f7; stroke-width: 2; rx: 8; }
+    .box-cache { fill: #0f172a; stroke: #f59e0b; stroke-width: 2; rx: 8; }
+    .line { stroke: #334155; stroke-width: 2; fill: none; }
+    .line-active { stroke: #06b6d4; stroke-width: 2; fill: none; }
+    .badge { font-family: monospace; font-size: 10px; font-weight: 700; fill: #06b6d4; }
+  </style>
+
+  <!-- Flow Boxes -->
+  <g transform="translate(40, 40)">
+    <rect class="box" width="150" height="60" />
+    <text x="75" y="28" class="title" text-anchor="middle">Trigger / Cron</text>
+    <text x="75" y="46" class="sub" text-anchor="middle">node-cron (*/5m)</text>
+  </g>
+
+  <g transform="translate(230, 40)">
+    <rect class="box" width="150" height="60" />
+    <text x="75" y="28" class="title" text-anchor="middle">Worker Queue</text>
+    <text x="75" y="46" class="sub" text-anchor="middle">In-Memory Pool</text>
+  </g>
+
+  <g transform="translate(420, 40)">
+    <rect class="box-primary" width="180" height="60" />
+    <text x="90" y="28" class="title" text-anchor="middle">Token-Bucket Limiter</text>
+    <text x="90" y="46" class="sub" text-anchor="middle">10 req/min per source</text>
+  </g>
+
+  <g transform="translate(640, 40)">
+    <rect class="box-primary" width="220" height="60" />
+    <text x="110" y="28" class="title" text-anchor="middle">Primary: RemoteOK API</text>
+    <text x="110" y="46" class="sub" text-anchor="middle">Circuit Breaker (5 err cap)</text>
+  </g>
+
+  <!-- Fallback Layers -->
+  <g transform="translate(640, 150)">
+    <rect class="box-secondary" width="220" height="60" />
+    <text x="110" y="28" class="title" text-anchor="middle">Secondary: WWR RSS</text>
+    <text x="110" y="46" class="sub" text-anchor="middle">Fallback Plan B</text>
+  </g>
+
+  <g transform="translate(640, 260)">
+    <rect class="box-cache" width="220" height="60" />
+    <text x="110" y="28" class="title" text-anchor="middle">SQLite Stale Cache</text>
+    <text x="110" y="46" class="sub" text-anchor="middle">isStale: true Fallback</text>
+  </g>
+
+  <!-- Persistence & Storage -->
+  <g transform="translate(320, 260)">
+    <rect class="box" width="220" height="60" />
+    <text x="110" y="28" class="title" text-anchor="middle">SQLite Database</text>
+    <text x="110" y="46" class="sub" text-anchor="middle">WAL Mode (ON CONFLICT id)</text>
+  </g>
+
+  <g transform="translate(40, 260)">
+    <rect class="box" width="220" height="60" />
+    <text x="110" y="28" class="title" text-anchor="middle">Express REST API</text>
+    <text x="110" y="46" class="sub" text-anchor="middle">React Dashboard Frontend</text>
+  </g>
+
+  <!-- Connecting Arrows -->
+  <path d="M 190 70 L 230 70" class="line-active" />
+  <path d="M 380 70 L 420 70" class="line-active" />
+  <path d="M 600 70 L 640 70" class="line-active" />
+
+  <path d="M 750 100 L 750 150" class="line" />
+  <path d="M 750 210 L 750 260" class="line" />
+
+  <path d="M 640 290 L 540 290" class="line" />
+  <path d="M 320 290 L 260 290" class="line-active" />
+
+  <text x="760" y="130" class="badge">ON FAILURE</text>
+  <text x="760" y="240" class="badge">ON FAILURE</text>
+</svg>
